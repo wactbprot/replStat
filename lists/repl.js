@@ -2,6 +2,7 @@ function(head, req) {
 
 
     var mustache = require("lib/couchapp/mustache"),
+    share        = require("lib/vaclab/share"),
     header       = this.templates.header,
     body         = this.templates.body,
     foot         = this.templates.foot,
@@ -21,12 +22,12 @@ function(head, req) {
     while(row = getRow()) {
 	var rv   = row.value,
 	rvs      = rv._replication_state;
-
+	
 	send( mustache.to_html(body,
 			       { id:rv._id,
 				 target:rv.target.replace("http://", ""),
 				 source:rv.source.replace("http://", ""),
-				 time:rv._replication_state_time,
+				 time:share.vlDateString(rv._replication_state_time),
 				 state:rvs,
 				 state_color:sco[rvs]		 
 			       }
