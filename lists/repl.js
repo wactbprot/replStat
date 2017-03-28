@@ -1,43 +1,49 @@
 function(head, req) {
 
-    var mustache = require("lib/couchapp/mustache"),
-    share        = require("lib/vaclab/share"),
-    header       = this.templates.header,
-    body         = this.templates.body,
-    foot         = this.templates.foot,
-    sco          = {error:"red",
-		    completed:"green",
-		    triggered:"orange"},
-    row;
-    start({headers: {"Content-type": "text/html"}});
+  var mustache = require("lib/couchapp/mustache"),
+      share        = require("lib/vaclab/share"),
+      header       = this.templates.header,
+      body         = this.templates.body,
+      foot         = this.templates.foot,
+      sco          = {error:"red",
+                      completed:"green",
+                      triggered:"limegreen"},
+      row;
+  start({headers: {"Content-type": "text/html"}});
 
-    send( mustache.to_html(header, 
-			   {"Title":"Replication State"}));
+  send( mustache.to_html(header,
+                         {"Title":"Replication State"}));
 
-    while(row = getRow()) {
-	var rv   = row.value,
-	rvs      = rv._replication_state,
-	pattern  = RegExp("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?"),
-	targetCompl = rv.target,
-	sourceCompl = rv.source,
-	neg      = { id:rv._id,
-		     futonStr:"/_utils/database.html?",
-		     "protStr": "http://",
-		     time:share.vlDateString(rv._replication_state_time),
-		     state:rvs,
-		     state_color:sco[rvs]		 
-		   };
+  while(row = getRow()) {
+    var rv   = row.value,
+        rvs      = rv._replication_state,
+        pattern  = RegExp("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?"),
+        targetCompl = rv.target,
+        sourceCompl = rv.source,
+        rd = share.vlDateString(rv._replication_state_time).split(" "),
+        neg = { id:rv._id,
+        masterdbStr:"http://a73434:5984/_utils/#/database/_replicator/",
+                fauxtonStr:"/_utils/#/database/",
+                protStr: "http://",
+                viewStr:"/_all_docs",
+                date:rd[0],
+                time:rd[1],
+                state:rvs,
+                state_color:sco[rvs]
+              };
 
-	neg.targetShort = targetCompl.match(pattern)[4];
-	neg.sourceShort = sourceCompl.match(pattern)[4];
-	neg.sourceDb    = targetCompl.match(pattern)[5].replace("/","");
-	neg.targetDb    = sourceCompl.match(pattern)[5].replace("/","");
+    neg.targetShort = targetCompl.match(pattern)[4]
+    neg.sourceShort = sourceCompl.match(pattern)[4]
+    neg.targetDispl = targetCompl.match(pattern)[4].split(":")[0].split(".")[0];;
+    neg.sourceDispl = sourceCompl.match(pattern)[4].split(":")[0].split(".")[0];
+    neg.sourceDb    = targetCompl.match(pattern)[5].replace("/","");
+    neg.targetDb    = sourceCompl.match(pattern)[5].replace("/","");
 
-	send( mustache.to_html(body,neg));
-    }
-    
-    send( mustache.to_html(foot, 
-			   {"Date":"nil"}));
+    send( mustache.to_html(body,neg));
+  }
+
+  send( mustache.to_html(foot,
+                         {"Date":new Date()}));
 };
 // ---example doc
 //  value: {
