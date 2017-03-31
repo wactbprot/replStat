@@ -8,7 +8,7 @@ function(head, req) {
       sco          = {error:"red",
                       completed:"green",
                       triggered:"limegreen"},
-      row;
+      row, neg;
   start({headers: {"Content-type": "text/html"}});
 
   send( mustache.to_html(header,
@@ -21,6 +21,7 @@ function(head, req) {
         targetCompl = rv.target,
         sourceCompl = rv.source,
         rd = share.vlDateString(rv._replication_state_time).split(" "),
+        dt = (new Date()) - new Date(rv._replication_state_time)
         neg = { id:rv._id,
         masterdbStr:"http://a73434:5984/_utils/#/database/_replicator/",
                 fauxtonStr:"/_utils/#/database/",
@@ -32,6 +33,26 @@ function(head, req) {
                 state_color:sco[rvs]
               };
 
+    if(dt) {
+      if( dt >  3600000 ){
+        dt = dt/3600000 ;
+        if (dt > 24) {
+          neg.dt = Math.round(dt/24) + " days";
+        }else {
+          neg.dt = Math.round(dt) + " h";
+        }
+      } else {
+        if( dt > 60000 ) {
+          neg.dt = Math.round(dt/60000) + " min";
+        } else {
+          neg.dt = Math.round(dt/1000) + " s";
+        }
+      }
+    } else {
+      dt = ""
+    }
+
+
     neg.targetShort = targetCompl.match(pattern)[4]
     neg.sourceShort = sourceCompl.match(pattern)[4]
     neg.targetDispl = targetCompl.match(pattern)[4].split(":")[0].split(".")[0];;
@@ -39,7 +60,8 @@ function(head, req) {
     neg.sourceDb    = targetCompl.match(pattern)[5].replace("/","");
     neg.targetDb    = sourceCompl.match(pattern)[5].replace("/","");
 
-    send( mustache.to_html(body,neg));
+
+    send( mustache.to_html(body, neg));
   }
 
   send( mustache.to_html(foot,
